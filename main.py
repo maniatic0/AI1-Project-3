@@ -101,14 +101,14 @@ def generateAllExactlyOneForBlock(
     doRowWise: bool,
     getFinalPosition,
     getNewVariable,
-):
+) -> list:
     clauses = []
     for blockPos in range(blockSize):
         if doRowWise:
             clauses += exactlyOne(
                 [
                     getFinalPosition(block, blockPos, y, xIter)
-                    for xIter in range(width - (blockSize - blockPos - 1))
+                    for xIter in range(blockPos, width - (blockSize - blockPos - 1))
                 ],
                 getNewVariable,
             )
@@ -116,7 +116,7 @@ def generateAllExactlyOneForBlock(
             clauses += exactlyOne(
                 [
                     getFinalPosition(block, blockPos, yIter, x)
-                    for yIter in range(height - (blockSize - blockPos - 1))
+                    for yIter in range(blockPos, height - (blockSize - blockPos - 1))
                 ],
                 getNewVariable,
             )
