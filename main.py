@@ -123,6 +123,51 @@ def generateAllExactlyOneForBlock(
     return clauses
 
 
+def generateAllNoOverlappingBlocksOnRowOrColumn(
+    blocks: list,
+    y: int,
+    x: int,
+    blockSizes: list,
+    width: int,
+    height: int,
+    doRowWise: bool,
+    getFinalPosition,
+) -> list:
+    blockAmount = len(blocks)
+    clauses = []
+    for blockIter in range(blockAmount - 1):  # All the blocks except the last one
+        lastBlockPos = blockSizes[blockIter] - 1
+        for nextBlockIter in range(blockAmount):  # All the next blocks
+            if doRowWise:
+                for xIter in range(
+                    lastBlockPos, width
+                ):  # All the last possible positions to end a block
+                    for xIter2 in range(
+                        xIter + 1
+                    ):  # All the previous positions where we could try to start the next block
+                        clauses += [
+                            -getFinalPosition(
+                                blocks[blockIter], lastBlockPos, y, xIter
+                            ),
+                            -getFinalPosition(blocks[nextBlockIter], 0, y, xIter2),
+                        ]
+            else:
+                for yIter in range(
+                    lastBlockPos, height
+                ):  # All the last possible positions to end a block
+                    for yIter2 in range(
+                        yIter + 1
+                    ):  # All the previous positions where we could try to start the next block
+                        clauses += [
+                            -getFinalPosition(
+                                blocks[blockIter], lastBlockPos, yIter, x
+                            ),
+                            -getFinalPosition(blocks[nextBlockIter], 0, yIter2, x),
+                        ]
+
+    return clauses
+
+
 def main(glucosePath: str, nonPath: str, bmpPath: str):
     width, height, maxBlockSize, rowsRules, columnsRules = loadNon(nonPath + ".non")
     to1D = generate2Dto1DTransform(width, height)
