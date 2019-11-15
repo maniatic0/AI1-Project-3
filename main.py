@@ -123,6 +123,40 @@ def generateAllExactlyOneForBlock(
     return clauses
 
 
+def generateAllBlockFull(
+    block: int,
+    y: int,
+    x: int,
+    blockSize: int,
+    width: int,
+    height: int,
+    doRowWise: bool,
+    getFinalPosition,
+) -> list:
+    clauses = []
+
+    if doRowWise:
+        for xIter in range(width - (blockSize - 1)):  # all starting positions
+            for blockPosIter in range(1, blockSize):  # all the next positions
+                clauses.append(
+                    [
+                        -getFinalPosition(block, 0, y, xIter),
+                        getFinalPosition(block, blockPosIter, y, xIter + blockPosIter),
+                    ]
+                )
+    else:
+        for yIter in range(height - (blockSize - 1)):  # all starting positions
+            for blockPosIter in range(1, blockSize):  # all the next positions
+                clauses.append(
+                    [
+                        -getFinalPosition(block, 0, yIter, x),
+                        getFinalPosition(block, blockPosIter, yIter + blockPosIter, x),
+                    ]
+                )
+
+    return clauses
+
+
 def generateAllNoOverlappingBlocksOnRowOrColumn(
     blocks: list,
     y: int,
@@ -174,14 +208,30 @@ def main(glucosePath: str, nonPath: str, bmpPath: str):
     from2DandBlockTo1D = generate2DAndBlockTo1D(to1D, width, height, maxBlockSize)
 
     variableCount = 0
+    map1DToPPos = {}
     map1DToFinalPos = {}  # We have many empty positions
-    mapFinalPosTo2D = {}
+    map1DAssociatedWithPVar = (
+        {}
+    )  # For Constraints of q variables associated with p variables
+    mapFinalPosTo2D = {}  # For decoding
 
     def getNewVariable():
         nonlocal variableCount
         newVar = variableCount
         variableCount += 1
         return newVar
+
+    def getPVariable(y, x):
+        pos = to1D(y, x)
+        if pos in mapFinalPosTo2D:
+            return map1DToPPos[pos]
+
+        # register it
+        finalPos = getNewVariable()
+        map1DToPPos[pos] = finalPos  # real name used
+        mapFinalPosTo2D[finalPos] = (y, x)  # for decoding
+        map1DAssociatedWithPVar[finalPos] = []  # for q variables
+        return finalPos
 
     def getFinalPosition(k, blockPos, y, x):
         pos = from2DandBlockTo1D(k, blockPos, y, x)
@@ -191,9 +241,11 @@ def main(glucosePath: str, nonPath: str, bmpPath: str):
             return map1DToFinalPos[pos]
 
         # register it
-        finalPos = getNewVariable()
-        map1DToFinalPos[pos] = finalPos
-        mapFinalPosTo2D[finalPos] = (y, x)
+        finalPos = getNewVariable()  # get free variable name
+        map1DToFinalPos[pos] = finalPos  # set the translation table for future querys
+        map1DAssociatedWithPVar[getPVariable(y, x)].append(
+            finalPos
+        )  # Add to P constraints
         return finalPos
 
 
