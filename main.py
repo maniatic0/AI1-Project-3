@@ -171,7 +171,7 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
     clauses = []
     for blockIter in range(blockAmount - 1):  # All the blocks except the last one
         lastBlockPos = blockSizes[blockIter] - 1
-        for nextBlockIter in range(blockAmount):  # All the next blocks
+        for nextBlockIter in range(blockIter+1, blockAmount):  # All the next blocks
             if doRowWise:
                 for xIter in range(
                     lastBlockPos, width
