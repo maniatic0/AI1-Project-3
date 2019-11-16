@@ -12,11 +12,19 @@ def loadNon(path: str):
     with open(path, "r") as f:
         # Read Header
         line = f.readline()
-        width = int(line.split()[1])
-        print("Width: " + str(width))
-        line = f.readline()
-        height = int(line.split()[1])
-        print("Width: " + str(height))
+        lineDiv = line.split()
+        if lineDiv[0].lower() == "width":
+            width = int(lineDiv[1])
+            print("Width: " + str(width))
+            line = f.readline()
+            height = int(line.split()[1])
+            print("Height: " + str(height))
+        else:
+            height = int(lineDiv[1])
+            print("Height: " + str(height))
+            line = f.readline()
+            width = int(line.split()[1])
+            print("Width: " + str(width))
 
         rowsRules = [[] for i in range(height)]
         columnsRules = [[] for i in range(width)]
@@ -24,7 +32,7 @@ def loadNon(path: str):
         # Read First Type Header (Rows or Columns)
         line = f.readline()  # Type Header
 
-        if line.strip() == "rows":
+        if line.strip().lower() == "rows":
             # Read Rows first
             print("First Row Header: " + line.strip())
             for i in range(height):
@@ -216,9 +224,10 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
     blockAmount = len(blocks)
     clauses = []
     for blockIter in range(blockAmount - 1):  # All the blocks except the last one
-        lastBlockPos = blockSizes[blockIter] - 1 # Last Block Position
+        lastBlockPos = blockSizes[blockIter] - 1  # Last Block Position
         block = blocks[blockIter]
         for nextBlockIter in range(blockIter + 1, blockAmount):  # All the next blocks
+            nextBlock = blocks[nextBlockIter]
             if doRowWise:
                 for xIter in range(
                     lastBlockPos, width
@@ -228,10 +237,8 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                     ):  # All the previous positions where we could try to start the next block
                         clauses.append(
                             [
-                                -getFinalPosition(
-                                    block, lastBlockPos, y, xIter
-                                ),
-                                -getFinalPosition(blocks[nextBlockIter], 0, y, xIter2),
+                                -getFinalPosition(block, lastBlockPos, y, xIter),
+                                -getFinalPosition(nextBlock, 0, y, xIter2),
                             ]
                         )
             else:
@@ -243,10 +250,8 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                     ):  # All the previous positions where we could try to start the next block
                         clauses.append(
                             [
-                                -getFinalPosition(
-                                    block, lastBlockPos, yIter, x
-                                ),
-                                -getFinalPosition(blocks[nextBlockIter], 0, yIter2, x),
+                                -getFinalPosition(block, lastBlockPos, yIter, x),
+                                -getFinalPosition(nextBlock, 0, yIter2, x),
                             ]
                         )
 
