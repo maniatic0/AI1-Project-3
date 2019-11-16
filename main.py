@@ -1,5 +1,6 @@
 import sys
 import copy
+import subprocess
 
 
 def loadNon(path: str):
@@ -70,6 +71,51 @@ def loadNon(path: str):
     return width, height, maxBlockSize, rowsRules, columnsRules
 
 
+def saveCnfFile(name: str, numVars: int, clauses: list):
+    with open(name, "w") as f:
+        print("p cnf {0} {1}".format(numVars, len(clauses)), file=f)
+
+        for clause in clauses:
+            print(" ".join(map(str, clause)) + " 0", file=f)
+
+        f.close()
+
+
+def loadOuputCnf(name: str, height: int, width: int, mapFinalPosTo2D: dict):
+    image = [[0 for x in range(width)] for y in range(height)]
+    model = []
+    with open(name, "r") as f:
+        line = f.readline()
+        splited = line.split(" ")
+        model = [int(var) for var in splited]
+        f.close()
+
+    for var in model:
+        if var == 0:
+            break
+
+        varName = abs(var)  # literal name
+
+        if varName in mapFinalPosTo2D:
+            y, x = mapFinalPosTo2D[varName]
+
+            if var > 0:  # positive literal
+                image[y][x] = 1
+            else:  # negative literal
+                image[y][x] = 0
+
+    return image
+
+
+def savePBM(name: str, image: list, height: int, width: int):
+    with open(name, "w") as f:
+        print("P1", file=f)
+        print("{0} {1}".format(width, height), file=f)
+        for y in range(height):
+            print(" ".join(map(str, image[y])), file=f)
+        f.close()
+
+
 def generate2Dto1DTransform(width: int, height: int):
     return lambda y, x: x + y * width
 
@@ -86,7 +132,7 @@ def exactlyOne(varList: list, getNewVariable) -> list:
     # for now AMOS
     listSize = len(varList)
     for i in range(listSize):
-        for j in range(listSize):
+        for j in range(i + 1, listSize):
             clauses.append([-varList[i], -varList[j]])
     return clauses
 
@@ -170,7 +216,8 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
     blockAmount = len(blocks)
     clauses = []
     for blockIter in range(blockAmount - 1):  # All the blocks except the last one
-        lastBlockPos = blockSizes[blockIter] - 1
+        lastBlockPos = blockSizes[blockIter] - 1 # Last Block Position
+        block = blocks[blockIter]
         for nextBlockIter in range(blockIter + 1, blockAmount):  # All the next blocks
             if doRowWise:
                 for xIter in range(
@@ -179,12 +226,14 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                     for xIter2 in range(
                         xIter + 1
                     ):  # All the previous positions where we could try to start the next block
-                        clauses += [
-                            -getFinalPosition(
-                                blocks[blockIter], lastBlockPos, y, xIter
-                            ),
-                            -getFinalPosition(blocks[nextBlockIter], 0, y, xIter2),
-                        ]
+                        clauses.append(
+                            [
+                                -getFinalPosition(
+                                    block, lastBlockPos, y, xIter
+                                ),
+                                -getFinalPosition(blocks[nextBlockIter], 0, y, xIter2),
+                            ]
+                        )
             else:
                 for yIter in range(
                     lastBlockPos, height
@@ -192,12 +241,14 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                     for yIter2 in range(
                         yIter + 1
                     ):  # All the previous positions where we could try to start the next block
-                        clauses += [
-                            -getFinalPosition(
-                                blocks[blockIter], lastBlockPos, yIter, x
-                            ),
-                            -getFinalPosition(blocks[nextBlockIter], 0, yIter2, x),
-                        ]
+                        clauses.append(
+                            [
+                                -getFinalPosition(
+                                    block, lastBlockPos, yIter, x
+                                ),
+                                -getFinalPosition(blocks[nextBlockIter], 0, yIter2, x),
+                            ]
+                        )
 
     return clauses
 
@@ -210,18 +261,22 @@ def generatePVariableAssociations(pVar: int, qVariablesAssociated: list) -> list
     return clauses
 
 
-def main(glucosePath: str, nonPath: str, bmpPath: str):
+def main(glucosePath: str, nonPath: str, pbmPath: str):
     width, height, maxBlockSize, rowsRules, columnsRules = loadNon(nonPath + ".non")
     to1D = generate2Dto1DTransform(width, height)
     from2DandBlockTo1D = generate2DAndBlockTo1D(to1D, width, height, maxBlockSize)
 
-    variableCount = 0
+    variableCount = 1
     map1DToPPos = {}
     map1DToFinalPos = {}  # We have many empty positions
     map1DAssociatedWithPVar = (
         {}
     )  # For Constraints of q variables associated with p variables
     mapFinalPosTo2D = {}  # For decoding
+    blockCount = 0
+    clauses = []
+    xPos = 0
+    yPos = 0
 
     def getNewVariable():
         nonlocal variableCount
@@ -231,7 +286,7 @@ def main(glucosePath: str, nonPath: str, bmpPath: str):
 
     def getPVariable(y, x):
         pos = to1D(y, x)
-        if pos in mapFinalPosTo2D:
+        if pos in map1DToPPos:
             return map1DToPPos[pos]
 
         # register it
@@ -251,16 +306,90 @@ def main(glucosePath: str, nonPath: str, bmpPath: str):
         # register it
         finalPos = getNewVariable()  # get free variable name
         map1DToFinalPos[pos] = finalPos  # set the translation table for future querys
-        map1DAssociatedWithPVar[getPVariable(y, x)].append(
-            finalPos
-        )  # Add to P constraints
+        associatedPVar = getPVariable(y, x)
+        map1DAssociatedWithPVar[associatedPVar].append(finalPos)  # Add to P constraints
         return finalPos
+
+    for rowRule in rowsRules:
+        blocksInRule = []
+        blockSizes = []
+        for blockSize in rowRule:
+            block = blockCount
+            blockCount += 1  # Create new block
+            blocksInRule.append(blockCount)
+            blockSizes.append(blockSize)
+
+            clauses += generateAllExactlyOneForBlock(
+                block,
+                yPos,
+                0,
+                blockSize,
+                width,
+                height,
+                True,
+                getFinalPosition,
+                getNewVariable,
+            )
+
+            clauses += generateAllBlockFull(
+                block, yPos, 0, blockSize, width, height, True, getFinalPosition,
+            )
+        clauses += generateAllNoOverlappingBlocksOnRowOrColumn(
+            blocksInRule, yPos, 0, blockSizes, width, height, True, getFinalPosition,
+        )
+        yPos += 1  # Move to next row
+
+    for columnRule in columnsRules:
+        blocksInRule = []
+        blockSizes = []
+        for blockSize in columnRule:
+            block = blockCount
+            blockCount += 1  # Create new block
+            blocksInRule.append(blockCount)
+            blockSizes.append(blockSize)
+
+            clauses += generateAllExactlyOneForBlock(
+                block,
+                0,
+                xPos,
+                blockSize,
+                width,
+                height,
+                False,
+                getFinalPosition,
+                getNewVariable,
+            )
+
+            clauses += generateAllBlockFull(
+                block, 0, xPos, blockSize, width, height, False, getFinalPosition,
+            )
+        clauses += generateAllNoOverlappingBlocksOnRowOrColumn(
+            blocksInRule, 0, xPos, blockSizes, width, height, False, getFinalPosition,
+        )
+        xPos += 1  # Move to next Column
+
+    for pVar, associatedQVars in map1DAssociatedWithPVar.items():
+        clauses += generatePVariableAssociations(pVar, associatedQVars)
+
+    inputFile = nonPath + "_input.cnf"
+    saveCnfFile(
+        inputFile, variableCount - 1, clauses
+    )  # Variables-1 because 0 is not a valid variable
+    outputFile = nonPath + "_output.cnf"
+    subprocess.call(
+        [glucosePath, inputFile, outputFile],
+        stdin=sys.stdin,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+    )
+    image = loadOuputCnf(outputFile, height, width, mapFinalPosTo2D)
+    savePBM(pbmPath, image, height, width)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         print("Not Enough Arguments", file=sys.stderr)
-        print("{0} glucosePath nonPath bmpPath".format(sys.argv[0]), file=sys.stderr)
+        print("{0} glucosePath nonPath pbmPath".format(sys.argv[0]), file=sys.stderr)
         exit(-1)
 
     main(sys.argv[1], sys.argv[2], sys.argv[3])
