@@ -164,7 +164,7 @@ def generateAllExactlyOneForBlock(
             clauses += exactlyOne(
                 [
                     getFinalPosition(block, blockPos, y, xIter)
-                    for xIter in range(blockPos, width - (blockSize - blockPos - 1))
+                    for xIter in range(0, width)
                 ],
                 getNewVariable,
             )
@@ -172,7 +172,7 @@ def generateAllExactlyOneForBlock(
             clauses += exactlyOne(
                 [
                     getFinalPosition(block, blockPos, yIter, x)
-                    for yIter in range(blockPos, height - (blockSize - blockPos - 1))
+                    for yIter in range(0, height)
                 ],
                 getNewVariable,
             )
