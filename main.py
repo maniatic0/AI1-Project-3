@@ -193,7 +193,11 @@ def generateAllBlockFull(
 
     for blockPosIter in range(blockSize - 1):
         if doRowWise:
-            for xIter in range(blockPosIter, width - (blockSize - blockPosIter - 1)):
+            for xIter in range(0, width):
+
+                if xIter + 1 >= width:
+                    break
+
                 # Prev implies the next
                 clauses.append(
                     [
@@ -214,7 +218,11 @@ def generateAllBlockFull(
                     ]
                 )
         else:
-            for yIter in range(blockPosIter, height - (blockSize - blockPosIter - 1)):
+            for yIter in range(0, height):
+
+                if yIter + 1 >= height:
+                    break
+
                 # Prev implies the next
                 clauses.append(
                     [
