@@ -216,7 +216,7 @@ def generateAllBlockFull(
         else:
             for yIter in range(
                 blockPosIter, height - (blockSize - blockPosIter - 1)
-            ):  # all starting positions
+            ):
                 # Prev implies the next
                 clauses.append(
                     [
