@@ -194,6 +194,9 @@ def generateAllBlockFull(
     if doRowWise:
         for xIter in range(width - (blockSize - 1)):  # all starting positions
             for blockPosIter in range(1, blockSize):  # all the next positions
+                if xIter + blockPosIter >= width:
+                    break
+
                 clauses.append(
                     [
                         -getFinalPosition(block, 0, y, xIter),
@@ -203,6 +206,8 @@ def generateAllBlockFull(
     else:
         for yIter in range(height - (blockSize - 1)):  # all starting positions
             for blockPosIter in range(1, blockSize):  # all the next positions
+                if yIter + blockPosIter >= height:
+                    break
                 clauses.append(
                     [
                         -getFinalPosition(block, 0, yIter, x),
@@ -259,7 +264,7 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
 
 def generatePVariableAssociations(pVar: int, qVariablesAssociated: list) -> list:
     clauses = []
-    clauses.append([-pVar] + qVariablesAssociated)
+    clauses.append([-pVar] + copy.deepcopy(qVariablesAssociated))
     for qVar in qVariablesAssociated:
         clauses.append([pVar, -qVar])
     return clauses
