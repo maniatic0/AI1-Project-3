@@ -191,29 +191,64 @@ def generateAllBlockFull(
 ) -> list:
     clauses = []
 
-    if doRowWise:
-        for xIter in range(width - (blockSize - 1)):  # all starting positions
-            for blockPosIter in range(1, blockSize):  # all the next positions
-                if xIter + blockPosIter >= width:
-                    break
+    for blockPosStartIter in range(blockSize):
+        if doRowWise:
+            for xIter in range(
+                blockPosStartIter, width - (blockSize - blockPosStartIter - 1)
+            ):
+                for blockPosIter in range(
+                    blockPosStartIter + 1, blockSize
+                ):  # all the next positions
+                    if xIter + blockPosIter >= width:
+                        break
 
-                clauses.append(
-                    [
-                        -getFinalPosition(block, 0, y, xIter),
-                        getFinalPosition(block, blockPosIter, y, xIter + blockPosIter),
-                    ]
-                )
-    else:
-        for yIter in range(height - (blockSize - 1)):  # all starting positions
-            for blockPosIter in range(1, blockSize):  # all the next positions
-                if yIter + blockPosIter >= height:
-                    break
-                clauses.append(
-                    [
-                        -getFinalPosition(block, 0, yIter, x),
-                        getFinalPosition(block, blockPosIter, yIter + blockPosIter, x),
-                    ]
-                )
+                    # Prev implies the next
+                    clauses.append(
+                        [
+                            -getFinalPosition(block, blockPosStartIter, y, xIter),
+                            getFinalPosition(
+                                block, blockPosIter, y, xIter + blockPosIter
+                            ),
+                        ]
+                    )
+
+                    # The next implies prev
+                    clauses.append(
+                        [
+                            getFinalPosition(block, blockPosStartIter, y, xIter),
+                            -getFinalPosition(
+                                block, blockPosIter, y, xIter + blockPosIter
+                            ),
+                        ]
+                    )
+        else:
+            for yIter in range(
+                blockPosStartIter, height - (blockSize - blockPosStartIter - 1)
+            ):  # all starting positions
+                for blockPosIter in range(
+                    blockPosStartIter + 1, blockSize
+                ):  # all the next positions
+                    if yIter + blockPosIter >= height:
+                        break
+                    # Prev implies the next
+                    clauses.append(
+                        [
+                            -getFinalPosition(block, blockPosStartIter, yIter, x),
+                            getFinalPosition(
+                                block, blockPosIter, yIter + blockPosIter, x
+                            ),
+                        ]
+                    )
+
+                    # The next implies prev
+                    clauses.append(
+                        [
+                            getFinalPosition(block, blockPosStartIter, yIter, x),
+                            -getFinalPosition(
+                                block, blockPosIter, yIter + blockPosIter, x
+                            ),
+                        ]
+                    )
 
     return clauses
 
