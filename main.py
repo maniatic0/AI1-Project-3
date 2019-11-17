@@ -137,14 +137,30 @@ def generate2DAndBlockTo1D(to1D, width: int, height: int, maxBlockSize: int):
     )
 
 
-def exactlyOne(varList: list, getNewVariable) -> list:
-    clauses = [copy.deepcopy(varList)]  # At least once
-    # for now AMOS
+def quadatricAMOS(varList: list, getNewVariable) -> list:
+    clauses = []
+
     listSize = len(varList)
     for i in range(listSize):
         for j in range(i + 1, listSize):
             clauses.append([-varList[i], -varList[j]])
     return clauses
+
+
+def heuleAMOS(varList: list, getNewVariable):
+    listSize = len(varList)
+    if listSize < 4:
+        return quadatricAMOS(varList, getNewVariable)
+    newVar = getNewVariable()
+    return quadatricAMOS([varList[0], varList[1], newVar], getNewVariable) + heuleAMOS(
+        varList[2:] + [-newVar], getNewVariable
+    )
+
+
+def exactlyOne(varList: list, getNewVariable) -> list:
+    clauses = [copy.deepcopy(varList)]  # At least once
+
+    return clauses + heuleAMOS(varList, getNewVariable)
 
 
 def generateAllExactlyOneForBlock(
