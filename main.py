@@ -125,13 +125,15 @@ def savePBM(name: str, image: list, height: int, width: int):
 
 
 def generate2Dto1DTransform(width: int, height: int):
-    return lambda y, x: x + y * width
+    return lambda y, x: x + (y * width)
 
 
 def generate2DAndBlockTo1D(to1D, width: int, height: int, maxBlockSize: int):
     area = width * height
     return (
-        lambda k, blockPos, y, x: to1D(y, x) + blockPos * area + k * area * maxBlockSize
+        lambda k, blockPos, y, x: to1D(y, x)
+        + (blockPos * area)
+        + (k * area * maxBlockSize)
     )
 
 
@@ -271,7 +273,7 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
     to1D = generate2Dto1DTransform(width, height)
     from2DandBlockTo1D = generate2DAndBlockTo1D(to1D, width, height, maxBlockSize)
 
-    variableCount = 1
+    variableCount = 1 # glucose starts counting variables from 1
     map1DToPPos = {}
     map1DToFinalPos = {}  # We have many empty positions
     map1DAssociatedWithPVar = (
@@ -282,6 +284,12 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
     clauses = []
     xPos = 0
     yPos = 0
+
+    def getNewBlock():
+        nonlocal blockCount
+        newBlock = blockCount
+        blockCount += 1
+        return newBlock
 
     def getNewVariable():
         nonlocal variableCount
@@ -319,9 +327,8 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
         blocksInRule = []
         blockSizes = []
         for blockSize in rowRule:
-            block = blockCount
-            blockCount += 1  # Create new block
-            blocksInRule.append(blockCount)
+            block = getNewBlock()
+            blocksInRule.append(block)
             blockSizes.append(blockSize)
 
             clauses += generateAllExactlyOneForBlock(
@@ -348,9 +355,8 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
         blocksInRule = []
         blockSizes = []
         for blockSize in columnRule:
-            block = blockCount
-            blockCount += 1  # Create new block
-            blocksInRule.append(blockCount)
+            block = getNewBlock()
+            blocksInRule.append(block)
             blockSizes.append(blockSize)
 
             clauses += generateAllExactlyOneForBlock(
