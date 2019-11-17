@@ -214,9 +214,7 @@ def generateAllBlockFull(
                     ]
                 )
         else:
-            for yIter in range(
-                blockPosIter, height - (blockSize - blockPosIter - 1)
-            ):
+            for yIter in range(blockPosIter, height - (blockSize - blockPosIter - 1)):
                 # Prev implies the next
                 clauses.append(
                     [
@@ -254,13 +252,13 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
     clauses = []
     for blockIter in range(0, blockAmount - 1):  # All the blocks except the last one
         lastBlockPos = blockSizes[blockIter] - 1  # Last Block Position
-        block = blocks[blockIter]
-        nextBlock = blocks[blockIter + 1]
+        block = blocks[blockIter]  # Current Block Name
+        nextBlock = blocks[blockIter + 1]  # Next Block Name
         if doRowWise:
             for xIter in range(width):  # All the last possible positions to end a block
                 for xIter2 in range(
                     min(xIter + 2, width)
-                ):  # All the previous positions where we could try to start the next block
+                ):  # All the previous positions where we could try to start the next block (includes separator white space)
                     clauses.append(
                         [
                             -getFinalPosition(block, lastBlockPos, y, xIter, doRowWise),
@@ -273,7 +271,7 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
             ):  # All the last possible positions to end a block
                 for yIter2 in range(
                     min(yIter + 2, height)
-                ):  # All the previous positions where we could try to start the next block
+                ):  # All the previous positions where we could try to start the next block (includes separator white space)
                     clauses.append(
                         [
                             -getFinalPosition(block, lastBlockPos, yIter, x, doRowWise),
@@ -338,8 +336,8 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
         map1DToPPos[pos] = finalPos  # real name used
         mapFinalPosTo2D[finalPos] = (y, x)  # for decoding
         map1DAssociatedWithPVar[finalPos] = [
-            [],
-            [],
+            [],  # For q Vars in row block
+            [],  # For q Vars in column block
         ]  # for q variables (separated if rowBlock or Column Block)
         return finalPos
 
