@@ -228,34 +228,33 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
     for blockIter in range(blockAmount - 1):  # All the blocks except the last one
         lastBlockPos = blockSizes[blockIter] - 1  # Last Block Position
         block = blocks[blockIter]
-        for nextBlockIter in range(blockIter + 1, blockAmount):  # All the next blocks
-            nextBlock = blocks[nextBlockIter]
-            if doRowWise:
-                for xIter in range(
-                    lastBlockPos, width
-                ):  # All the last possible positions to end a block
-                    for xIter2 in range(
-                        xIter + 1
-                    ):  # All the previous positions where we could try to start the next block
-                        clauses.append(
-                            [
-                                -getFinalPosition(block, lastBlockPos, y, xIter),
-                                -getFinalPosition(nextBlock, 0, y, xIter2),
-                            ]
-                        )
-            else:
-                for yIter in range(
-                    lastBlockPos, height
-                ):  # All the last possible positions to end a block
-                    for yIter2 in range(
-                        yIter + 1
-                    ):  # All the previous positions where we could try to start the next block
-                        clauses.append(
-                            [
-                                -getFinalPosition(block, lastBlockPos, yIter, x),
-                                -getFinalPosition(nextBlock, 0, yIter2, x),
-                            ]
-                        )
+        nextBlock = blocks[blockIter + 1]
+        if doRowWise:
+            for xIter in range(
+                lastBlockPos, width
+            ):  # All the last possible positions to end a block
+                for xIter2 in range(
+                    xIter + 1
+                ):  # All the previous positions where we could try to start the next block
+                    clauses.append(
+                        [
+                            -getFinalPosition(block, lastBlockPos, y, xIter),
+                            -getFinalPosition(nextBlock, 0, y, xIter2),
+                        ]
+                    )
+        else:
+            for yIter in range(
+                lastBlockPos, height
+            ):  # All the last possible positions to end a block
+                for yIter2 in range(
+                    yIter + 1
+                ):  # All the previous positions where we could try to start the next block
+                    clauses.append(
+                        [
+                            -getFinalPosition(block, lastBlockPos, yIter, x),
+                            -getFinalPosition(nextBlock, 0, yIter2, x),
+                        ]
+                    )
 
     return clauses
 
@@ -273,7 +272,7 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
     to1D = generate2Dto1DTransform(width, height)
     from2DandBlockTo1D = generate2DAndBlockTo1D(to1D, width, height, maxBlockSize)
 
-    variableCount = 1 # glucose starts counting variables from 1
+    variableCount = 1  # glucose starts counting variables from 1
     map1DToPPos = {}
     map1DToFinalPos = {}  # We have many empty positions
     map1DAssociatedWithPVar = (
