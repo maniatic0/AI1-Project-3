@@ -230,11 +230,9 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
         block = blocks[blockIter]
         nextBlock = blocks[blockIter + 1]
         if doRowWise:
-            for xIter in range(
-                lastBlockPos, width
-            ):  # All the last possible positions to end a block
+            for xIter in range(width):  # All the last possible positions to end a block
                 for xIter2 in range(
-                    xIter + 1
+                    min(xIter + 2, width)
                 ):  # All the previous positions where we could try to start the next block
                     clauses.append(
                         [
@@ -244,10 +242,10 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                     )
         else:
             for yIter in range(
-                lastBlockPos, height
+                height
             ):  # All the last possible positions to end a block
                 for yIter2 in range(
-                    yIter + 1
+                    min(yIter + 2, height)
                 ):  # All the previous positions where we could try to start the next block
                     clauses.append(
                         [
