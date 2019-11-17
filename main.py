@@ -163,7 +163,7 @@ def generateAllExactlyOneForBlock(
         if doRowWise:
             clauses += exactlyOne(
                 [
-                    getFinalPosition(block, blockPos, y, xIter)
+                    getFinalPosition(block, blockPos, y, xIter, doRowWise)
                     for xIter in range(0, width)
                 ],
                 getNewVariable,
@@ -171,7 +171,7 @@ def generateAllExactlyOneForBlock(
         else:
             clauses += exactlyOne(
                 [
-                    getFinalPosition(block, blockPos, yIter, x)
+                    getFinalPosition(block, blockPos, yIter, x, doRowWise)
                     for yIter in range(0, height)
                 ],
                 getNewVariable,
@@ -191,64 +191,51 @@ def generateAllBlockFull(
 ) -> list:
     clauses = []
 
-    for blockPosStartIter in range(blockSize):
+    for blockPosIter in range(blockSize - 1):
         if doRowWise:
-            for xIter in range(
-                blockPosStartIter, width - (blockSize - blockPosStartIter - 1)
-            ):
-                for blockPosIter in range(
-                    blockPosStartIter + 1, blockSize
-                ):  # all the next positions
-                    if xIter + blockPosIter >= width:
-                        break
+            for xIter in range(blockPosIter, width - (blockSize - blockPosIter - 1)):
+                # Prev implies the next
+                clauses.append(
+                    [
+                        -getFinalPosition(block, blockPosIter, y, xIter, doRowWise),
+                        getFinalPosition(
+                            block, blockPosIter + 1, y, xIter + 1, doRowWise
+                        ),
+                    ]
+                )
 
-                    # Prev implies the next
-                    clauses.append(
-                        [
-                            -getFinalPosition(block, blockPosStartIter, y, xIter),
-                            getFinalPosition(
-                                block, blockPosIter, y, xIter + blockPosIter
-                            ),
-                        ]
-                    )
-
-                    # The next implies prev
-                    clauses.append(
-                        [
-                            getFinalPosition(block, blockPosStartIter, y, xIter),
-                            -getFinalPosition(
-                                block, blockPosIter, y, xIter + blockPosIter
-                            ),
-                        ]
-                    )
+                # The next implies prev
+                clauses.append(
+                    [
+                        getFinalPosition(block, blockPosIter, y, xIter, doRowWise),
+                        -getFinalPosition(
+                            block, blockPosIter + 1, y, xIter + 1, doRowWise
+                        ),
+                    ]
+                )
         else:
             for yIter in range(
-                blockPosStartIter, height - (blockSize - blockPosStartIter - 1)
+                blockPosIter, height - (blockSize - blockPosIter - 1)
             ):  # all starting positions
-                for blockPosIter in range(
-                    blockPosStartIter + 1, blockSize
-                ):  # all the next positions
-                    if yIter + blockPosIter >= height:
-                        break
-                    # Prev implies the next
-                    clauses.append(
-                        [
-                            -getFinalPosition(block, blockPosStartIter, yIter, x),
-                            getFinalPosition(
-                                block, blockPosIter, yIter + blockPosIter, x
-                            ),
-                        ]
-                    )
+                # Prev implies the next
+                clauses.append(
+                    [
+                        -getFinalPosition(block, blockPosIter, yIter, x, doRowWise),
+                        getFinalPosition(
+                            block, blockPosIter + 1, yIter + 1, x, doRowWise
+                        ),
+                    ]
+                )
 
-                    # The next implies prev
-                    clauses.append(
-                        [
-                            getFinalPosition(block, blockPosStartIter, yIter, x),
-                            -getFinalPosition(
-                                block, blockPosIter, yIter + blockPosIter, x
-                            ),
-                        ]
-                    )
+                # The next implies prev
+                clauses.append(
+                    [
+                        getFinalPosition(block, blockPosIter, yIter, x, doRowWise),
+                        -getFinalPosition(
+                            block, blockPosIter + 1, yIter + 1, x, doRowWise
+                        ),
+                    ]
+                )
 
     return clauses
 
@@ -276,8 +263,8 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                 ):  # All the previous positions where we could try to start the next block
                     clauses.append(
                         [
-                            -getFinalPosition(block, lastBlockPos, y, xIter),
-                            -getFinalPosition(nextBlock, 0, y, xIter2),
+                            -getFinalPosition(block, lastBlockPos, y, xIter, doRowWise),
+                            -getFinalPosition(nextBlock, 0, y, xIter2, doRowWise),
                         ]
                     )
         else:
@@ -289,8 +276,8 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
                 ):  # All the previous positions where we could try to start the next block
                     clauses.append(
                         [
-                            -getFinalPosition(block, lastBlockPos, yIter, x),
-                            -getFinalPosition(nextBlock, 0, yIter2, x),
+                            -getFinalPosition(block, lastBlockPos, yIter, x, doRowWise),
+                            -getFinalPosition(nextBlock, 0, yIter2, x, doRowWise),
                         ]
                     )
 
@@ -299,9 +286,16 @@ def generateAllNoOverlappingBlocksOnRowOrColumn(
 
 def generatePVariableAssociations(pVar: int, qVariablesAssociated: list) -> list:
     clauses = []
-    clauses.append([-pVar] + copy.deepcopy(qVariablesAssociated))
-    for qVar in qVariablesAssociated:
+
+    clauses.append([-pVar] + copy.deepcopy(qVariablesAssociated[0]))  # Row Blocks
+    clauses.append([-pVar] + copy.deepcopy(qVariablesAssociated[1]))  # Column Blocks
+
+    for qVar in qVariablesAssociated[0]:  # Row Blocks
         clauses.append([pVar, -qVar])
+
+    for qVar in qVariablesAssociated[1]:  # Column Blocks
+        clauses.append([pVar, -qVar])
+
     return clauses
 
 
@@ -343,10 +337,13 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
         finalPos = getNewVariable()
         map1DToPPos[pos] = finalPos  # real name used
         mapFinalPosTo2D[finalPos] = (y, x)  # for decoding
-        map1DAssociatedWithPVar[finalPos] = []  # for q variables
+        map1DAssociatedWithPVar[finalPos] = [
+            [],
+            [],
+        ]  # for q variables (separated if rowBlock or Column Block)
         return finalPos
 
-    def getFinalPosition(k, blockPos, y, x):
+    def getFinalPosition(k, blockPos, y, x, rowWise):
         pos = from2DandBlockTo1D(k, blockPos, y, x)
 
         # if we have seen it before
@@ -357,7 +354,16 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
         finalPos = getNewVariable()  # get free variable name
         map1DToFinalPos[pos] = finalPos  # set the translation table for future querys
         associatedPVar = getPVariable(y, x)
-        map1DAssociatedWithPVar[associatedPVar].append(finalPos)  # Add to P constraints
+
+        if rowWise:
+            map1DAssociatedWithPVar[associatedPVar][0].append(
+                finalPos
+            )  # Add to P constraints row wise
+        else:
+            map1DAssociatedWithPVar[associatedPVar][1].append(
+                finalPos
+            )  # Add to P constraints column wise
+
         return finalPos
 
     for rowRule in rowsRules:
