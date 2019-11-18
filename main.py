@@ -156,11 +156,23 @@ def heuleAMOS(varList: list, getNewVariable):
         varList[2:] + [-newVar], getNewVariable
     )
 
+def logarithmicAMOS(varList: list, getNewVariable):
+    M = 24 # 24 bits (16,777,215 variable names)
+    clauses = []
+    for offset in range(M):
+        mask = 1 << offset
+        newVar = getNewVariable()
+        for var in varList:
+            if var & mask:
+                clauses.append([-var, newVar])
+            else:
+                clauses.append([-var, -newVar])
+    return clauses
 
 def exactlyOne(varList: list, getNewVariable) -> list:
     clauses = [copy.deepcopy(varList)]  # At least once
 
-    return clauses + heuleAMOS(varList, getNewVariable)
+    return clauses + logarithmicAMOS(varList, getNewVariable)
 
 
 def generateAllExactlyOneForBlock(
