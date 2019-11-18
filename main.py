@@ -192,6 +192,7 @@ def exactlyOneError(varList: list, getNewVariable) -> list:
 
 exactlyOne = lambda varList, getNewVariable: exactlyOneError(varList, getNewVariable)
 
+
 def configureExactlyOne(amosType: int):
     global exactlyOne
     if amosType == 0:
