@@ -156,8 +156,9 @@ def heuleAMOS(varList: list, getNewVariable):
         varList[2:] + [-newVar], getNewVariable
     )
 
+
 def logarithmicAMOS(varList: list, getNewVariable):
-    M = 24 # 24 bits (16,777,215 variable names)
+    M = 24  # 24 bits (16,777,215 variable names)
     clauses = []
     for offset in range(M):
         mask = 1 << offset
@@ -169,10 +170,44 @@ def logarithmicAMOS(varList: list, getNewVariable):
                 clauses.append([-var, -newVar])
     return clauses
 
-def exactlyOne(varList: list, getNewVariable) -> list:
-    clauses = [copy.deepcopy(varList)]  # At least once
 
+def exactlyOneQuadratic(varList: list, getNewVariable) -> list:
+    clauses = [copy.deepcopy(varList)]  # At least once
+    return clauses + quadatricAMOS(varList, getNewVariable)
+
+
+def exactlyOneHeule(varList: list, getNewVariable) -> list:
+    clauses = [copy.deepcopy(varList)]  # At least once
+    return clauses + heuleAMOS(varList, getNewVariable)
+
+
+def exactlyOneLogarithmic(varList: list, getNewVariable) -> list:
+    clauses = [copy.deepcopy(varList)]  # At least once
     return clauses + logarithmicAMOS(varList, getNewVariable)
+
+
+def exactlyOneError(varList: list, getNewVariable) -> list:
+    raise ValueError("Should not have reached this one")
+
+
+exactlyOne = lambda varList, getNewVariable: exactlyOneError(varList, getNewVariable)
+
+def configureExactlyOne(amosType: int):
+    global exactlyOne
+    if amosType == 0:
+        exactlyOne = lambda varList, getNewVariable: exactlyOneError(
+            varList, getNewVariable
+        )
+    elif amosType == 1:
+        exactlyOne = lambda varList, getNewVariable: exactlyOneHeule(
+            varList, getNewVariable
+        )
+    elif amosType == 2:
+        exactlyOne = lambda varList, getNewVariable: exactlyOneQuadratic(
+            varList, getNewVariable
+        )
+    else:
+        raise ValueError("amoType={0} out of bounds".format(amosType))
 
 
 def generateAllExactlyOneForBlock(
@@ -333,7 +368,8 @@ def generatePVariableAssociations(pVar: int, qVariablesAssociated: list) -> list
     return clauses
 
 
-def main(glucosePath: str, nonPath: str, pbmPath: str):
+def main(amosType: int, glucosePath: str, nonPath: str, pbmPath: str):
+    configureExactlyOne(amosType)
     width, height, maxBlockSize, rowsRules, columnsRules = loadNon(nonPath + ".non")
     to1D = generate2Dto1DTransform(width, height)
     from2DandBlockTo1D = generate2DAndBlockTo1D(to1D, width, height, maxBlockSize)
@@ -474,10 +510,33 @@ def main(glucosePath: str, nonPath: str, pbmPath: str):
     savePBM(pbmPath, image, height, width)
 
 
+def printError():
+    print(
+        "{0} AMOS_TYPE glucosePath nonPath pbmPath".format(sys.argv[0]), file=sys.stderr
+    )
+    print(
+        "Where AMOS_TYPE is 0 (quadratic), 1 (heule) or 2 (logarithmic)",
+        file=sys.stderr,
+    )
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         print("Not Enough Arguments", file=sys.stderr)
-        print("{0} glucosePath nonPath pbmPath".format(sys.argv[0]), file=sys.stderr)
+        printError()
         exit(-1)
 
-    main(sys.argv[1], sys.argv[2], sys.argv[3])
+    amosType = -1
+    try:
+        amosType = int(sys.argv[1])
+    except Exception as e:
+        print("Error: {0}".format(e), file=sys.stderr)
+        printError()
+        exit(-1)
+
+    if amosType != 0 and amosType != 1 and amosType != 2:
+        print("AMOS_TYPE Out of Range", file=sys.stderr)
+        printError()
+        exit(-1)
+
+    main(amosType, sys.argv[2], sys.argv[3], sys.argv[4])
