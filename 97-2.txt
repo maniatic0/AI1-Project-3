@@ -1,0 +1,56 @@
+c
+c This is glucose 4.0 --  based on MiniSAT (Many thanks to MiniSAT team)
+c
+c ========================================[ Problem Statistics ]===========================================
+c |                                                                                                       |
+c |  Number of variables:         32055                                                                   |
+c |  Number of clauses:          659021                                                                   |
+c |  Parse time:                   0.15 s                                                                 |
+c |                                                                                                       |
+c | Preprocesing is fully done
+c |  Eliminated clauses:           0.08 Mb                                                                |
+c |  Simplification time:          0.42 s                                                                 |
+c |                                                                                                       |
+c ========================================[ MAGIC CONSTANTS ]==============================================
+c | Constants are supposed to work well together :-)                                                      |
+c | however, if you find better choices, please let us known...                                           |
+c |-------------------------------------------------------------------------------------------------------|
+c | Adapt dynamically the solver after 100000 conflicts (restarts, reduction strategies...)               |
+c |-------------------------------------------------------------------------------------------------------|
+c |                                |                                |                                     |
+c | - Restarts:                    | - Reduce Clause DB:            | - Minimize Asserting:               |
+c |   * LBD Queue    :     50      |   * First     :   2000         |    * size <  30                     |
+c |   * Trail  Queue :   5000      |   * Inc       :    300         |    * lbd  <   6                     |
+c |   * K            :   0.80      |   * Special   :   1000         |                                     |
+c |   * R            :   1.40      |   * Protected :  (lbd)< 30     |                                     |
+c |                                |                                |                                     |
+c ==================================[ Search Statistics (every  10000 conflicts) ]=========================
+c |                                                                                                       |
+c |          RESTARTS           |          ORIGINAL         |              LEARNT              | Progress |
+c |       NB   Blocked  Avg Cfc |    Vars  Clauses Literals |   Red   Learnts    LBD2  Removed |          |
+c =========================================================================================================
+c |       68         0      147 |   30282   611862  1444426 |     2     6086      808     3647 |  3.541 % |
+c |      113        91      176 |   30134   604104  1427721 |     3    11105     1275     8540 |  4.003 % |
+c |      142       202      211 |   18030   560359  1337631 |     4    11670     1742    15537 | 41.763 % |
+c last restart ## conflicts  :  1732 22 
+c =========================================================================================================
+c restarts              : 159 (233 conflicts in avg)
+c blocked restarts      : 215 (multiple: 54) 
+c last block at restart : 150
+c nb ReduceDB           : 5
+c nb removed Clauses    : 20374
+c nb learnts DL2        : 2381
+c nb learnts size 2     : 964
+c nb learnts size 1     : 627
+c conflicts             : 37099          (6104 /sec)
+c decisions             : 222571         (0.00 % random) (36618 /sec)
+c propagations          : 41191496       (6776983 /sec)
+c nb reduced Clauses    : 3812
+c CPU time              : 6.07815 s
+
+s SATISFIABLE
+SAT
+Width: 30
+Height: 35
+First Column Header: columns
+Second Row Header: rows

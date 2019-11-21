@@ -1,0 +1,78 @@
+c
+c This is glucose 4.0 --  based on MiniSAT (Many thanks to MiniSAT team)
+c
+c ========================================[ Problem Statistics ]===========================================
+c |                                                                                                       |
+c |  Number of variables:         45318                                                                   |
+c |  Number of clauses:          206030                                                                   |
+c |  Parse time:                   0.06 s                                                                 |
+c |                                                                                                       |
+c | Preprocesing is fully done
+c |  Eliminated clauses:           0.31 Mb                                                                |
+c |  Simplification time:          0.20 s                                                                 |
+c |                                                                                                       |
+c ========================================[ MAGIC CONSTANTS ]==============================================
+c | Constants are supposed to work well together :-)                                                      |
+c | however, if you find better choices, please let us known...                                           |
+c |-------------------------------------------------------------------------------------------------------|
+c | Adapt dynamically the solver after 100000 conflicts (restarts, reduction strategies...)               |
+c |-------------------------------------------------------------------------------------------------------|
+c |                                |                                |                                     |
+c | - Restarts:                    | - Reduce Clause DB:            | - Minimize Asserting:               |
+c |   * LBD Queue    :     50      |   * First     :   2000         |    * size <  30                     |
+c |   * Trail  Queue :   5000      |   * Inc       :    300         |    * lbd  <   6                     |
+c |   * K            :   0.80      |   * Special   :   1000         |                                     |
+c |   * R            :   1.40      |   * Protected :  (lbd)< 30     |                                     |
+c |                                |                                |                                     |
+c ==================================[ Search Statistics (every  10000 conflicts) ]=========================
+c |                                                                                                       |
+c |          RESTARTS           |          ORIGINAL         |              LEARNT              | Progress |
+c |       NB   Blocked  Avg Cfc |    Vars  Clauses Literals |   Red   Learnts    LBD2  Removed |          |
+c =========================================================================================================
+c |       62         0      161 |   35738   185487   548720 |     2     6005      956     3583 |  3.005 % |
+c |      122        64      163 |   35515   182565   541199 |     3    10686     1577     8454 |  3.498 % |
+c |      196       124      153 |   35390   181017   537358 |     4    13484     2038    15423 |  3.773 % |
+c |      249       191      160 |   34953   177779   527612 |     5    13262     2438    25012 |  4.738 % |
+c |      312       270      160 |   34673   175251   520556 |     5    22512     2820    25012 |  5.355 % |
+c |      368       342      163 |   34624   174710   519200 |     6    20652     3146    36682 |  5.464 % |
+c |      440       414      159 |   34578   174214   517814 |     7    15712     3470    51237 |  5.565 % |
+c |      495       473      161 |   34546   173859   516918 |     7    25662     3706    51237 |  5.636 % |
+c |      555       529      162 |   34494   173474   515705 |     8    18218     3923    67497 |  5.750 % |
+c |      611       578      163 |   34285   172190   511551 |     8    27456     4109    67497 |  6.212 % |
+c
+c Try to adapt solver strategies
+c 
+c Nothing extreme in this problem, continue with glucose default strategies.
+c
+c |      676       609      162 |   32934   162656   482843 |     8    34198     4258    67497 |  9.193 % |
+c |      745       633      161 |   32911   162451   482322 |     9    26516     4413    85164 |  9.244 % |
+c |      814       651      159 |   32599   160993   477181 |     9    35430     4549    85164 |  9.932 % |
+c |      878       677      159 |   31393   153157   452109 |    10    23621     4693   105721 | 12.593 % |
+c |      947       688      158 |   31330   152661   450683 |    10    33583     4815   105721 | 12.732 % |
+c |     1011       701      158 |   31053   150820   445025 |    10    42754     4939   105721 | 13.343 % |
+c |     1062       707      160 |   29812   143131   421847 |    11    28366     5053   128682 | 16.082 % |
+c |     1124       714      160 |   29782   142644   420668 |    11    38311     5167   128682 | 16.148 % |
+c |     1175       722      161 |   23377   141759   418209 |    11    48036     5245   128682 | 30.282 % |
+c |     1218       723      164 |   23300   101089   304500 |    12    24523     5408   146603 | 30.451 % |
+c last restart ## conflicts  :  144 24 
+c =========================================================================================================
+c restarts              : 1222 (165 conflicts in avg)
+c blocked restarts      : 723 (multiple: 280) 
+c last block at restart : 1196
+c nb ReduceDB           : 12
+c nb removed Clauses    : 146603
+c nb learnts DL2        : 5496
+c nb learnts size 2     : 2583
+c nb learnts size 1     : 691
+c conflicts             : 201728         (3073 /sec)
+c decisions             : 873296         (0.00 % random) (13303 /sec)
+c propagations          : 251869441      (3836672 /sec)
+c nb reduced Clauses    : 7666
+c CPU time              : 65.6479 s
+
+s SATISFIABLE
+SAT
+Width: 30
+Height: 35
+First Column Header: columns
+Second Row Header: rows
